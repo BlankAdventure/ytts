@@ -4,7 +4,7 @@ Created on Tue Apr  2 17:28:03 2024
 
 @author: BlankAdventure
 """
-
+import time
 import scrapetube
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
@@ -12,23 +12,32 @@ import urllib.request
 import json
 import urllib
 from tqdm import tqdm
+from progress.bar import Bar
+
+#prog.streams.flush()
+#progressbar.streams.wrap_stdout()
+#redirect_stdout=True
 
 def add_to_db(vid_ids, collection):
     failed = []
-    for vid in tqdm(vid_ids):
-        print(f'*** Video: {vid} ***')        
-        title = get_video_metadata(vid)['title'] #for now we only care about the title
-        transcript = get_transcript(vid)    
-        if transcript:
-            count = 0
-            for entry in tqdm(transcript):
-                text = entry['text']
-                metadata = {'timestamp': entry['start'], 'title': title, 'video': vid}
-                uid = f'{vid}_{count}'
-                collection.add(documents=[text], metadatas=[metadata], ids=[uid])
-                count += 1
-        else:
-            failed.append(vid)
+    with Bar('Vidoes...', max=len(vid_ids)) as bar1:
+        print('')
+        for vid in vid_ids:
+            title = get_video_metadata(vid)['title'] #for now we only care about the title
+            transcript = get_transcript(vid)    
+            if transcript:
+                count = 0
+                with Bar('Transcript...', max=len(transcript)) as bar2:
+                    for entry in transcript:
+                        text = entry['text']
+                        metadata = {'timestamp': entry['start'], 'title': title, 'video': vid}
+                        uid = f'{vid}_{count}'
+                        collection.add(documents=[text], metadatas=[metadata], ids=[uid])
+                        count += 1
+                        bar2.next()
+            else:
+                failed.append(vid)
+            bar1.next()
     return failed
 
 # Get list of all videos in a channel
