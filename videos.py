@@ -11,6 +11,25 @@ from youtube_transcript_api.formatters import TextFormatter
 import urllib.request
 import json
 import urllib
+from tqdm import tqdm
+
+def add_to_db(vid_ids, collection):
+    failed = []
+    for vid in tqdm(vid_ids):
+        print(f'*** Video: {vid} ***')        
+        title = get_video_metadata(vid)['title'] #for now we only care about the title
+        transcript = get_transcript(vid)    
+        if transcript:
+            count = 0
+            for entry in tqdm(transcript):
+                text = entry['text']
+                metadata = {'timestamp': entry['start'], 'title': title, 'video': vid}
+                uid = f'{vid}_{count}'
+                collection.add(documents=[text], metadatas=[metadata], ids=[uid])
+                count += 1
+        else:
+            failed.append(vid)
+    return failed
 
 # Get list of all videos in a channel
 def get_video_ids(channel: str ="MrCarlsonsLab") -> list[str]:
