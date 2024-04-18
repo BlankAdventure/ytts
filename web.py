@@ -7,6 +7,8 @@ Created on Wed Apr 17 22:34:56 2024
 
 from nicegui import ui
 import chromadb
+from functools import wraps, partial
+import asyncio
 
 COLLECTION_NAME = "MrCarlsonsLab"
 PATH = "db/"+COLLECTION_NAME
@@ -17,6 +19,15 @@ results = []
 #def connect():
 client = chromadb.PersistentClient(path=PATH)
 collection = client.get_collection(name=COLLECTION_NAME)
+
+def wrap(func):
+    @wraps(func)
+    async def run(*args, loop=None, executor=None, **kwargs):
+        if loop is None:
+            loop = asyncio.get_event_loop()
+        pfunc = partial(func, *args, **kwargs)
+        return await loop.run_in_executor(executor, pfunc)
+    return run
 
 
 def format_timestamp(timestamp):
@@ -35,11 +46,9 @@ def display_youtube_videos(video_ids, timestamps=None):
         ui.image(f"https://img.youtube.com/vi/{video_id}/hqdefault.jpg").style('width: 320px;')
         ui.link(youtube_url, f"Watch on YouTube (Jump to {formatted_timestamp})")
 
-
-
 def get_results(qstr: str, n=5):
     transformed_list = []
-    results = collection.query(query_texts=['how to solve noise issues?'], n_results=n) 
+    results = collection.query(query_texts=[qstr], n_results=n) 
     remove = ('data', 'uris', 'embeddings')
     for k in remove:
         results.pop(k, None)
@@ -51,28 +60,37 @@ def get_results(qstr: str, n=5):
         transformed_list.append(entry)  
     return transformed_list
 
+@wrap
 def populate():
-    results = get_results(qstr=None, n=5)
-    print(results)
-    with resDiv:
-        vids = [results[x]['metadatas']['video'] for x in range(3)]
-        ts = [results[x]['metadatas']['timestamp'] for x in range(3)]
-        display_youtube_videos(vids, ts)
-        #for entry in results:
-        #    pass
+    results = []
+    query = search.value
+    if query:    
+        results = get_results(qstr=query, n=5)
+    if results:
+        resDiv.clear()
+        with resDiv:
+            ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
+            for entry in results:
+                formatted_timestamp = format_timestamp( entry['metadatas']['timestamp'] )
+                vid = entry['metadatas']['video']
+                youtube_url = f"https://www.youtube.com/watch?v={vid}&t={formatted_timestamp}"
+                title = entry['metadatas']['title']
+                with ui.row().classes('border-2 border-slate-600 p-2 items-center mt-2 hover:bg-amber-100'):
+                    ui.image(f"https://img.youtube.com/vi/{vid}/hqdefault.jpg").style('width: 240px;')
+                    with ui.column().style().classes().style('width: 320px;'):
+                        ui.link(f"{title} ({formatted_timestamp})", youtube_url).classes('text-pretty').style('font-size: 115%;')
+                        ui.space()
+                        ui.label("..."+entry['documents']+"...").style('font-size: 115%; font-style: italic')
 
-with ui.row().classes('border w-full gap-2 bg-yellow-100'):
-    with ui.column().classes('border bg-teal-50'):
-        ui.label(f'Search {COLLECTION_NAME}').style('font-size: 125%')
-        ui.input(placeholder='begin search').props('rounded outlined clearable dense').style('font-size: 125%; width: 500px;')
-        ui.button('Search', on_click=populate)
-    with ui.column().classes('border bg-green-50'):
-        ui.label('Results')
-        resDiv = ui.element('div').classes('border bg-red-50')
-        populate()
+with ui.row().classes('w-full gap-2'):
+    with ui.column().classes().style():
+        ui.label(f'Search {COLLECTION_NAME}').style('font-size: 125%').classes('w-full text-center bg-slate-300')
+        with ui.row():
+            search = ui.input(placeholder='combating noise').props('rounded outlined clearable dense').style('font-size: 125%; width: 500px;')
+            ui.button(icon='search', on_click=populate)
+        ui.label('  ')
+        resDiv = ui.element('div').classes()
 
-#if collection is None:
-#    connect()
 
 ui.run()
 
