@@ -4,7 +4,7 @@ Created on Tue Apr  2 17:28:03 2024
 
 @author: BlankAdventure
 """
-import time
+
 import scrapetube
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
@@ -14,8 +14,9 @@ import urllib
 from tqdm import tqdm
 tqdm._instances.clear()
 
-def add_to_db(vid_ids, collection):
-    failed = []
+# Returns a generator yielding either a dictionary containing the transcript text, 
+# metadata and unique ID, OR, None if unable to load. 
+def entry_generator(vid_ids: list[str]) -> dict | None:
     N = len(vid_ids)
     for n, vid in enumerate(vid_ids):
         title = get_video_metadata(vid)['title'] #for now we only care about the title
@@ -26,10 +27,20 @@ def add_to_db(vid_ids, collection):
                 text = entry['text']
                 metadata = {'timestamp': entry['start'], 'title': title, 'video': vid}
                 uid = f'{vid}_{count}'
-                collection.add(documents=[text], metadatas=[metadata], ids=[uid])
                 count += 1
+                yield {'text': text, 'metadata': metadata, 'uid': uid}
         else:
-            failed.append(vid)
+            yield None
+    
+
+# Helper function for adding entries to a chromadb collection
+def add_to_db(vid_ids: list[str], collection) -> list[str]:
+    failed = []
+    for entry in entry_generator(vid_ids):
+        if entry:
+            collection.add(documents=[entry['text']], metadatas=[entry['metadata']], ids=[entry['uid']])
+        else:
+            failed.append(entry)
     return failed
 
 # Get list of all videos in a channel
@@ -45,13 +56,12 @@ def get_video_metadata(vid_id: str) -> dict:
     url = "https://www.youtube.com/oembed"
     query_string = urllib.parse.urlencode(params)
     url = url + "?" + query_string
-
     with urllib.request.urlopen(url) as response:
         response_text = response.read()
         data = json.loads(response_text.decode())
     return data 
 
-# Get total time of list of vids 
+# Helper function - get total time of list of vids 
 def total_length(vid_ids: list[str]) -> tuple[list[float], list[str]]:
     all_ends = []
     failed = []
@@ -67,8 +77,8 @@ def total_length(vid_ids: list[str]) -> tuple[list[float], list[str]]:
             failed.append(vid_id)
     return all_ends, failed
         
-# Get transcript from a given video ID
-def get_transcript(vid_id: str) -> dict:
+# Get transcript from a given video ID. Returns None if unable to load.
+def get_transcript(vid_id: str) -> dict | None:
     transcript = None
     try:
         transcript = YouTubeTranscriptApi.get_transcript(vid_id)
