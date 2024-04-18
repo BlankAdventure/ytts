@@ -33,7 +33,7 @@ def add_to_db(vid_ids, collection):
     return failed
 
 # Get list of all videos in a channel
-def get_video_ids(channel: str ="MrCarlsonsLab") -> list[str]:
+def get_video_ids(channel: str) -> list[str]:
     videos = scrapetube.get_channel(channel_username=channel)
     vid_ids = [video['videoId'] for video in videos]
     return vid_ids

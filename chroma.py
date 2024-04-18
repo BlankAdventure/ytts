@@ -8,16 +8,20 @@ Created on Wed Apr 17 16:12:02 2024
 import videos
 import chromadb
 
-client = chromadb.Client()
-client.delete_collection("my-collection")
-collection = client.create_collection("my-collection")
+COLLECTION_NAME = "MrCarlsonsLab"
+PATH = "db/"+COLLECTION_NAME
 
+client = chromadb.PersistentClient(path=PATH)
+collection = client.get_or_create_collection(name=COLLECTION_NAME)
 
-#vid_ids = videos.get_video_ids()
+vid_ids = videos.get_video_ids(channel=COLLECTION_NAME)
 
 # for testing just want a few entries
 
-videos.add_to_db(['xY49YWDcKWE'], collection)
+videos.add_to_db(vid_ids, collection)
+
+
+#results = collection.query(query_texts=['shielding'])
 
 # docs1=["This is a document about cat"]
 # meta1=[{"category": "animal"}]
