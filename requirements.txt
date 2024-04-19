@@ -1,0 +1,5 @@
+chromadb==0.4.24
+nicegui==1.4.22
+scrapetube==2.5.1
+tqdm==4.66.2
+youtube_transcript_api==0.6.2
