@@ -14,19 +14,27 @@ import os
 import videos
 import chromadb
 
-# Name of channel to process 
-COLLECTION_NAME = "MrCarlsonsLab"
-PATH = "db/"+COLLECTION_NAME
-full_path = os.path.normpath(os.path.join(os.getcwd(),PATH))
+# Adds transcript entries to a chromadb collection
+def add_to_db(vid_ids: list[str], collection) -> list[str]:
+    failed = []
+    for entry in videos.entry_generator(vid_ids):
+        if entry:
+            collection.add(documents=[entry['text']], metadatas=[entry['metadata']], ids=[entry['uid']])
+        else:
+            failed.append(entry)
+    return failed
+
+# Top-level function for building a chromadb embeddings vector database from
+# a specified YouTube channel. The channel name should be the part after the 
+# @ symbol
+def build_db(channel_name: str):
+    path = "db/"+channel_name
+    full_path = os.path.normpath(os.path.join(os.getcwd(),path))
+    print(f'SAVING TO: {full_path}') #show full path to stored db
+    client = chromadb.PersistentClient(path=path)
+    collection = client.get_or_create_collection(name=channel_name)    
+    vid_ids = videos.get_video_ids(channel=channel_name)
+    add_to_db(vid_ids, collection) #modify-in-place operation
+    return collection
 
 
-client = chromadb.PersistentClient(path=PATH)
-collection = client.get_or_create_collection(name=COLLECTION_NAME)
-
-vid_ids = videos.get_video_ids(channel=COLLECTION_NAME)
-print(f'SAVED TO: {full_path}') #show full path to stored db
-
-videos.add_to_db(vid_ids, collection)
-
-# Example query
-results = collection.query(query_texts=['how to solve noise issues?'])
