@@ -31,17 +31,6 @@ def entry_generator(vid_ids: list[str]) -> dict | None:
                 yield {'text': text, 'metadata': metadata, 'uid': uid}
         else:
             yield None
-    
-
-# Helper function for adding entries to a chromadb collection
-def add_to_db(vid_ids: list[str], collection) -> list[str]:
-    failed = []
-    for entry in entry_generator(vid_ids):
-        if entry:
-            collection.add(documents=[entry['text']], metadatas=[entry['metadata']], ids=[entry['uid']])
-        else:
-            failed.append(entry)
-    return failed
 
 # Get list of all videos in a channel
 def get_video_ids(channel: str) -> list[str]:
