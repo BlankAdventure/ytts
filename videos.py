@@ -4,7 +4,6 @@ Created on Tue Apr  2 17:28:03 2024
 
 @author: BlankAdventure
 """
-import time
 import scrapetube
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
@@ -40,7 +39,6 @@ def chunk_generator(vid_ids: list[str], buff_len: int, adv_by: int) -> dict | No
             pbar = tqdm(total=P,desc=f'{vid} ({n+1}/{NV})')
             while stop < NT:
                 yield get_chunk(start, stop)
-                time.sleep(0.1)
                 start += adv_by
                 stop += adv_by
                 pbar.update(1)
