@@ -21,8 +21,8 @@ tqdm._instances.clear()
 # adv_by: number of sentences to advancy by (think sliding window)
 def chunk_generator(vid_ids: list[str], buff_len: int, adv_by: int) -> dict | None:
     NV = len(vid_ids)
-    def get_chunk(a, b):
-        buffer = transcript[a:b]    
+    def get_chunk(start, stop):
+        buffer = transcript[start:stop]    
         text = get_text(buffer)
         metadata = {'timestamp': buffer[0]['start'], 'title': title, 'video': vid}
         uid = f'{vid}_{start}'
