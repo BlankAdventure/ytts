@@ -54,26 +54,25 @@ def get_results(qstr: str, n=5) -> list[dict]:
 async def main():
     
     # Populate the search results panel
+    @ui.refreshable
     async def populate() -> None:
         results = []
         query = search.value
         if query:    
             results = await run.cpu_bound( get_results, query,  5)
         if results:
-            resDiv.clear()
-            with resDiv:
-                ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
-                for entry in results:
-                    formatted_timestamp = format_timestamp( entry['metadatas']['timestamp'] )
-                    vid = entry['metadatas']['video']
-                    youtube_url = f"https://www.youtube.com/watch?v={vid}&t={formatted_timestamp}"
-                    title = entry['metadatas']['title']
-                    with ui.row().classes('border-2 border-slate-600 p-2 items-center mt-2 hover:bg-amber-100'):
-                        ui.image(f"https://img.youtube.com/vi/{vid}/hqdefault.jpg").style('width: 240px;')
-                        with ui.column().style().classes().style('width: 320px;'):
-                            ui.link(f"{title} ({formatted_timestamp})", youtube_url, new_tab=True).classes('text-pretty').style('font-size: 115%;')
-                            ui.space()
-                            ui.label("..."+entry['documents']+"...").style('font-size: 115%; font-style: italic')
+            ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
+            for entry in results:
+                formatted_timestamp = format_timestamp( entry['metadatas']['timestamp'] )
+                vid = entry['metadatas']['video']
+                youtube_url = f"https://www.youtube.com/watch?v={vid}&t={formatted_timestamp}"
+                title = entry['metadatas']['title']
+                with ui.row().classes('border-2 border-slate-600 p-2 items-center mt-2 hover:bg-amber-100'):
+                    ui.image(f"https://img.youtube.com/vi/{vid}/hqdefault.jpg").style('width: 240px;')
+                    with ui.column().style().classes().style('width: 320px;'):
+                        ui.link(f"{title} ({formatted_timestamp})", youtube_url, new_tab=True).classes('text-pretty').style('font-size: 115%;')
+                        ui.space()
+                        ui.label("..."+entry['documents']+"...").style('font-size: 115%; font-style: italic')
     
     # Build the UI
     with ui.row().classes('w-full gap-2'):
@@ -81,9 +80,9 @@ async def main():
             ui.label(f'Search {COLLECTION_NAME}').style('font-size: 125%').classes('w-full text-center bg-slate-300')
             with ui.row():
                 search = ui.input(label='enter search terms').props('rounded outlined dense clearable').style('font-size: 125%; width: 500px;')
-                ui.button(icon='search', on_click=populate)
+                ui.button(icon='search', on_click=populate.refresh)
             ui.label('  ')
-            resDiv = ui.element('div').classes()
+            await populate()
     
     
 @ui.page('/')    
@@ -92,4 +91,7 @@ async def index():
     
 if __name__ in {"__main__", "__mp_main__"}:    
     ui.run(title='YTTS')
+
+
+
 
