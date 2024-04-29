@@ -8,8 +8,7 @@ Created on Wed Apr 17 22:34:56 2024
 
 from nicegui import ui, run
 import chromadb
-from functools import wraps, partial
-import asyncio
+
 
 COLLECTION_NAME = "MrCarlsonsLab"
 PATH = "db/"+COLLECTION_NAME
@@ -18,17 +17,6 @@ results = []
 
 client = chromadb.PersistentClient(path=PATH)
 collection = client.get_collection(name=COLLECTION_NAME)
-
-# unused 
-# def wrap(func):
-#     @wraps(func)
-#     async def run(*args, loop=None, executor=None, **kwargs):
-#         if loop is None:
-#             loop = asyncio.get_event_loop()
-#         pfunc = partial(func, *args, **kwargs)
-#         return await loop.run_in_executor(executor, pfunc)
-#     return run
-
 
 def format_timestamp(timestamp: float) -> str:
     hours = int(timestamp / 3600)
@@ -40,7 +28,7 @@ def format_timestamp(timestamp: float) -> str:
 def get_results(qstr: str, n=5) -> list[dict]:
     transformed_list = []
     results = collection.query(query_texts=[qstr], n_results=n) 
-    remove = ('data', 'uris', 'embeddings')
+    remove = ('data', 'uris', 'embeddings') #Don't need these
     for k in remove:
         results.pop(k, None)
     num_entries = len(results['ids'][0])    
@@ -51,39 +39,47 @@ def get_results(qstr: str, n=5) -> list[dict]:
         transformed_list.append(entry)  
     return transformed_list
 
-# Populate the search results panel
-async def populate() -> None:
-    results = []
-    query = search.value
-    if query:    
-        results = await run.cpu_bound( get_results, query,  5)
-    if results:
-        resDiv.clear()
-        with resDiv:
-            ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
-            for entry in results:
-                formatted_timestamp = format_timestamp( entry['metadatas']['timestamp'] )
-                vid = entry['metadatas']['video']
-                youtube_url = f"https://www.youtube.com/watch?v={vid}&t={formatted_timestamp}"
-                title = entry['metadatas']['title']
-                with ui.row().classes('border-2 border-slate-600 p-2 items-center mt-2 hover:bg-amber-100'):
-                    ui.image(f"https://img.youtube.com/vi/{vid}/hqdefault.jpg").style('width: 240px;')
-                    with ui.column().style().classes().style('width: 320px;'):
-                        ui.link(f"{title} ({formatted_timestamp})", youtube_url, new_tab=True).classes('text-pretty').style('font-size: 115%;')
-                        ui.space()
-                        ui.label("..."+entry['documents']+"...").style('font-size: 115%; font-style: italic')
-
-# Build the UI
-with ui.row().classes('w-full gap-2'):
-    with ui.column().classes().style():
-        ui.label(f'Search {COLLECTION_NAME}').style('font-size: 125%').classes('w-full text-center bg-slate-300')
-        with ui.row():
-            search = ui.input(label='enter search terms').props('rounded outlined dense clearable').style('font-size: 125%; width: 500px;')
-            ui.button(icon='search', on_click=populate)
-        ui.label('  ')
-        resDiv = ui.element('div').classes()
-
+async def main():
+    
+    # Populate the search results panel
+    @ui.refreshable
+    async def populate() -> None:
+        results = []
+        query = search.value
+        if query:    
+            results = await run.cpu_bound( get_results, query,  5)
+            if results:
+                ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
+                for entry in results:
+                    formatted_timestamp = format_timestamp( entry['metadatas']['timestamp'] )
+                    vid = entry['metadatas']['video']
+                    youtube_url = f"https://www.youtube.com/watch?v={vid}&t={formatted_timestamp}"
+                    title = entry['metadatas']['title']
+                    with ui.row().classes('border-2 border-slate-600 p-2 items-center mt-2 hover:bg-amber-100'):
+                        ui.image(f"https://img.youtube.com/vi/{vid}/hqdefault.jpg").style('width: 240px;')
+                        with ui.column().style().classes().style('width: 320px;'):
+                            ui.link(f"{title} ({formatted_timestamp})", youtube_url, new_tab=True).classes('text-pretty').style('font-size: 115%;')
+                            ui.space()
+                            ui.label("..."+entry['documents']+"...").style('font-size: 115%; font-style: italic')
+    
+    # Build the UI
+    with ui.row().classes('w-full gap-2'):
+        with ui.column().classes().style():
+            ui.label(f'Search {COLLECTION_NAME}').style('font-size: 125%').classes('w-full text-center bg-slate-300')
+            with ui.row():
+                search = ui.input(label='enter search terms').props('rounded outlined dense clearable').style('font-size: 125%; width: 500px;')
+                ui.button(icon='search', on_click=populate.refresh)
+            ui.label('  ')
+            await populate()
+    
+    
+@ui.page('/')    
+async def index():
+    await main()    
     
 if __name__ in {"__main__", "__mp_main__"}:    
     ui.run(title='YTTS')
+
+
+
 
