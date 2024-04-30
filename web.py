@@ -11,7 +11,7 @@ import chromadb
 
 
 COLLECTION_NAME = "MrCarlsonsLab"
-PATH = "db/"+COLLECTION_NAME
+PATH = "C:/LocalRepo/ytts/db/"+COLLECTION_NAME
 
 results = []
 
@@ -71,11 +71,6 @@ async def main():
                 ui.button(icon='search', on_click=populate.refresh)
             ui.label('  ')
             await populate()
-    
-    
-@ui.page('/')    
-async def index():
-    await main()    
     
 if __name__ in {"__main__", "__mp_main__"}:    
     ui.run(title='YTTS')
