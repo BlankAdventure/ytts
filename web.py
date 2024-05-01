@@ -6,12 +6,19 @@ Created on Wed Apr 17 22:34:56 2024
 @author: Patrick
 """
 
-from nicegui import ui, run
+from nicegui import ui
 import chromadb
 import asyncio
+from functools import wraps, partial
 
-results = []
-collection = None
+def wrap(func):
+    @wraps(func)
+    async def run(*args, loop=None, executor=None, **kwargs):
+        if loop is None:
+            loop = asyncio.get_event_loop()
+        pfunc = partial(func, *args, **kwargs)
+        return await loop.run_in_executor(executor, pfunc)
+    return run
 
 
 def format_timestamp(timestamp: float) -> str:
@@ -21,7 +28,8 @@ def format_timestamp(timestamp: float) -> str:
     return f"{hours}h{minutes}m{seconds}s"
 
 # Issue a querty to the database and return (cleaned up) results
-def get_results(qstr: str, n=5) -> list[dict]:
+@wrap
+def get_results(collection, qstr: str, n=5) -> list[dict]:
     transformed_list = []
     results = collection.query(query_texts=[qstr], n_results=n) 
     remove = ('data', 'uris', 'embeddings') #Don't need these
@@ -35,8 +43,9 @@ def get_results(qstr: str, n=5) -> list[dict]:
         transformed_list.append(entry)  
     return transformed_list
 
+
 async def main(channel_name, db_path, db_name):
-    global collection
+
     client = chromadb.PersistentClient(path=db_path)
     collection = client.get_collection(name=db_name)
     
@@ -46,8 +55,7 @@ async def main(channel_name, db_path, db_name):
         results = []
         query = search.value
         if query:    
-            #results = await run.cpu_bound( get_results, query, 5 )
-            results = get_results(query, 5)
+            results = await get_results(collection, query, 5)
             if results:
                 ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
                 for entry in results:
@@ -74,9 +82,13 @@ async def main(channel_name, db_path, db_name):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    @ui.page('/')
-    async def test():
-        await (main('MrCarlsonsLab','C:/LocalRepo/ytts/db/MrCarlsonsLab','MrCarlsonsLab'))
+    @ui.page('/a')
+    async def testa():
+        await (main('MrCarlsonsLab 1','C:/LocalRepo/ytts/db/MrCarlsonsLab','MrCarlsonsLab'))
+
+    @ui.page('/b')
+    async def testb():
+        await (main('MrCarlsonsLab 2','C:/LocalRepo/ytts/chunk_20_15/MrCarlsonslab','MrCarlsonslab'))
 
     ui.run(title='YTTS')
 
