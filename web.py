@@ -8,15 +8,11 @@ Created on Wed Apr 17 22:34:56 2024
 
 from nicegui import ui, run
 import chromadb
-
-
-COLLECTION_NAME = "MrCarlsonsLab"
-PATH = "C:/LocalRepo/ytts/db/"+COLLECTION_NAME
+import asyncio
 
 results = []
+collection = None
 
-client = chromadb.PersistentClient(path=PATH)
-collection = client.get_collection(name=COLLECTION_NAME)
 
 def format_timestamp(timestamp: float) -> str:
     hours = int(timestamp / 3600)
@@ -39,7 +35,10 @@ def get_results(qstr: str, n=5) -> list[dict]:
         transformed_list.append(entry)  
     return transformed_list
 
-async def main():
+async def main(channel_name, db_path, db_name):
+    global collection
+    client = chromadb.PersistentClient(path=db_path)
+    collection = client.get_collection(name=db_name)
     
     # Populate the search results panel
     @ui.refreshable
@@ -47,7 +46,8 @@ async def main():
         results = []
         query = search.value
         if query:    
-            results = await run.cpu_bound( get_results, query,  5)
+            #results = await run.cpu_bound( get_results, query, 5 )
+            results = get_results(query, 5)
             if results:
                 ui.label('Results').style('font-size: 125%').classes('bg-slate-300 w-full')
                 for entry in results:
@@ -65,14 +65,19 @@ async def main():
     # Build the UI
     with ui.row().classes('w-full gap-2'):
         with ui.column().classes().style():
-            ui.label(f'Search {COLLECTION_NAME}').style('font-size: 125%').classes('w-full text-center bg-slate-300')
+            ui.label(f'Search {channel_name}').style('font-size: 125%').classes('w-full text-center bg-slate-300')
             with ui.row():
                 search = ui.input(label='enter search terms').props('rounded outlined dense clearable').style('font-size: 125%; width: 500px;')
                 ui.button(icon='search', on_click=populate.refresh)
             ui.label('  ')
             await populate()
-    
-if __name__ in {"__main__", "__mp_main__"}:    
+
+
+if __name__ in {"__main__", "__mp_main__"}:
+    @ui.page('/')
+    async def test():
+        await (main('MrCarlsonsLab','C:/LocalRepo/ytts/db/MrCarlsonsLab','MrCarlsonsLab'))
+
     ui.run(title='YTTS')
 
 
