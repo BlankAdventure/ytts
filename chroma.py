@@ -15,9 +15,9 @@ import videos
 import chromadb
 
 # Adds transcript entries to a chromadb collection
-def add_to_db(vid_ids: list[str], collection) -> list[str]:
+def add_to_db(vid_ids: list[str], collection, chunk: int, adv_by: int) -> list[str]:
     failed = []
-    for entry in videos.entry_generator(vid_ids):
+    for entry in videos.chunk_generator(vid_ids,chunk,adv_by):
         if entry:
             collection.add(documents=[entry['text']], metadatas=[entry['metadata']], ids=[entry['uid']])
         else:
@@ -27,14 +27,14 @@ def add_to_db(vid_ids: list[str], collection) -> list[str]:
 # Top-level function for building a chromadb embeddings vector database from
 # a specified YouTube channel. The channel name should be the part after the 
 # @ symbol
-def build_db(channel_name: str, path: str = '.'):
+def build_db(channel_name: str, db_name: str, path: str = '.', **kwargs):
     full_path = os.path.normpath(os.path.join(os.path.abspath(path),channel_name))
     print(f'SAVING TO: {full_path}') #show full path to stored db
     client = chromadb.PersistentClient(path=full_path)
-    collection = client.get_or_create_collection(name=channel_name)    
+    collection = client.get_or_create_collection(name=db_name)    
     print('Getting video list...')
     vid_ids = videos.get_video_ids(channel=channel_name)
-    add_to_db(vid_ids, collection) #modify-in-place operation
+    add_to_db(vid_ids, collection, **kwargs) #modify-in-place operation
     return collection
 
 
