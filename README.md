@@ -1,3 +1,7 @@
+# YouTube Transcript Search
+
+[Live Demo  - The Signal Path](http://www.blankadventure.com/ytts2)
+
 YTTS is an exploration of enabling semantic search capabilities on a YouTube channel. The idea was initially sparked by Mr. Carlson Lab, whose videos are a deep-dive into antique electronics repair. His videos are information-dense and I would often find myself wishing I could remember some clever method or technqiue for circuit debugging, noise reduction, or performance testing. The ability to semantically search his content for various topcis seemed like exactly the thing I needed, and so this is my attempt. 
 
 A few things would be needed to accomplish this: (1) scraping the channel for video transcripts; (2) transforming the transcripts; (3) storing to a database; and (4) enabling the search.
