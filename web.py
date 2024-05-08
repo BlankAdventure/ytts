@@ -44,9 +44,14 @@ def get_results(collection, qstr: str, n=5) -> list[dict]:
     return transformed_list
 
 
-async def main(channel_name, db_path, db_name):
-
-    client = chromadb.PersistentClient(path=db_path)
+async def main(channel_name, db_name, db_path=None):
+    
+    # Load db from persistent media location is specfied
+    if db_path:
+        client = chromadb.PersistentClient(path=db_path)
+    else: # otherwise connection to server (running locally)
+        client = chromadb.HttpClient(host="localhost", port=8000)
+        
     collection = client.get_collection(name=db_name)
     
     # Populate the search results panel
@@ -84,11 +89,11 @@ async def main(channel_name, db_path, db_name):
 if __name__ in {"__main__", "__mp_main__"}:
     @ui.page('/a')
     async def testa():
-        await (main('MrCarlsonsLab 1','C:/LocalRepo/ytts/db/MrCarlsonsLab','MrCarlsonsLab'))
+        await (main('MrCarlsonsLab','MrCarlsonslab'))
 
     @ui.page('/b')
     async def testb():
-        await (main('MrCarlsonsLab 2','C:/LocalRepo/ytts/chunk_20_15/MrCarlsonslab','MrCarlsonslab'))
+        await (main('TheSignalPath','Thesignalpath'))
 
     ui.run(title='YTTS')
 
