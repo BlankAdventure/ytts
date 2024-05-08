@@ -6,19 +6,8 @@ Created on Wed Apr 17 22:34:56 2024
 @author: Patrick
 """
 
-from nicegui import ui
+from nicegui import ui, run
 import chromadb
-import asyncio
-from functools import wraps, partial
-
-def wrap(func):
-    @wraps(func)
-    async def run(*args, loop=None, executor=None, **kwargs):
-        if loop is None:
-            loop = asyncio.get_event_loop()
-        pfunc = partial(func, *args, **kwargs)
-        return await loop.run_in_executor(executor, pfunc)
-    return run
 
 
 def format_timestamp(timestamp: float) -> str:
@@ -28,10 +17,9 @@ def format_timestamp(timestamp: float) -> str:
     return f"{hours}h{minutes}m{seconds}s"
 
 # Issue a querty to the database and return (cleaned up) results
-@wrap
-def get_results(collection, qstr: str, n=5) -> list[dict]:
+async def get_results(collection, qstr: str, n=5) -> list[dict]:
     transformed_list = []
-    results = collection.query(query_texts=[qstr], n_results=n) 
+    results = await run.io_bound(collection.query, query_texts=[qstr], n_results=n) 
     remove = ('data', 'uris', 'embeddings') #Don't need these
     for k in remove:
         results.pop(k, None)
