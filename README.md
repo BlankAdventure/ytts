@@ -1,6 +1,10 @@
 # YouTube Transcript Search
 
-[Live Demo  - The Signal Path](http://www.blankadventure.com/ytts2)
+[Live Demo 1 - Mr Carlson's Lab](http://www.blankadventure.com/ytts1)
+
+[Live Demo 2 - The Signal Path](http://www.blankadventure.com/ytts2)
+
+(_Each database was built with a chunk size of 6 and an overlap of 2._)
 
 YTTS is an exploration of enabling semantic search capabilities on a YouTube channel. The idea was initially sparked by Mr. Carlson Lab, whose videos are a deep-dive into antique electronics repair. His videos are information-dense and I would often find myself wishing I could remember some clever method or technqiue for circuit debugging, noise reduction, or performance testing. The ability to semantically search his content for various topcis seemed like exactly the thing I needed, and so this is my attempt. 
 
