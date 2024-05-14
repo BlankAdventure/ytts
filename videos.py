@@ -15,6 +15,50 @@ from math import ceil
 
 tqdm._instances.clear()
 
+# Splits each transcript sentence into individual words. Pairs each word
+# with its nearest video start time. Returns a list of said pairs.
+def split(transcript: list[dict]) -> list[tuple[str, float]]:
+    out = []
+    for entry in transcript:
+        words = entry['text'].split()
+        start = [entry['start']] * len(words)
+        out.extend(list(zip(words,start)))
+    return out
+
+# Chunks together individual words (as opposed to senteces) into length buff_len
+# and advances ahead by adv_by words.
+def word_chunk_generator(vid_ids: list[str], buff_len: int, adv_by: int) -> dict | None:
+    NV = len(vid_ids)
+    def get_chunk(start, stop):
+        text = " ".join([i[0] for i in word_list[start:stop]])
+        metadata = {'timestamp': word_list[start][1], 'title': title, 'video': vid}
+        uid = f'{vid}_{start}'
+        return {'text': text, 'metadata': metadata, 'uid': uid}
+    for n, vid in enumerate(vid_ids):
+        start = 0
+        stop = buff_len 
+        title = get_video_metadata(vid)['title'] #for now we only care about the title
+        transcript = get_transcript(vid)  
+        if transcript:
+            word_list = split(transcript)
+            NW = len(word_list)
+            P = ceil( (NW-buff_len)/adv_by )
+            pbar = tqdm(total=P,desc=f'{vid} ({n+1}/{NV})')
+            while stop < NW:
+                yield get_chunk(start, stop)
+                start += adv_by
+                stop += adv_by
+                pbar.update(1)
+            # Need to get any leftovers...
+            yield ( get_chunk(start,NW) )
+            pbar.update(1)
+            pbar.close()                
+        else:
+            yield None
+
+
+
+
 
 # Chunks together transcript rows into buff_len, and advances by adv_by. 
 # buff_len: number of sentences to combine
