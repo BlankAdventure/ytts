@@ -15,9 +15,9 @@ import videos
 import chromadb
 
 # Adds transcript entries to a chromadb collection
-def add_to_db(vid_ids: list[str], collection, chunk: int, adv_by: int) -> list[str]:
+def add_to_db(vid_ids: list[str], collection, chunk: int, adv_by: int, chunk_func: callable) -> list[str]:
     failed = []
-    for entry in videos.chunk_generator(vid_ids,chunk,adv_by):
+    for entry in chunk_func(vid_ids,chunk,adv_by):
         if entry:
             collection.add(documents=[entry['text']], metadatas=[entry['metadata']], ids=[entry['uid']])
         else:
