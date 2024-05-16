@@ -10,7 +10,7 @@ Created on Wed May  1 12:48:18 2024
 from chroma import build_db
 from videos import word_chunk_generator
 from chromadb.utils import embedding_functions
-em = embedding_functions.SentenceTransformerEmbeddingFunction(model_name='deepset/roberta-base-squad2')
+em = embedding_functions.SentenceTransformerEmbeddingFunction(model_name='sentence-transformers/all-mpnet-base-v2')
 
 
 chan_name = 'MrCarlsonslab'
