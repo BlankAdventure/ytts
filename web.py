@@ -52,7 +52,7 @@ def get_results(collection, qstr: str, n=5) -> list[dict]:
     return transformed_list
 
 
-async def main(channel_name: str, db_name: str, db_path: str=None) -> None:
+async def main(em: callable, channel_name: str, db_name: str, db_path: str=None) -> None:
     
     # Load db from persistent media location if db_path specfied
     # otherwise connect to server (running locally)
@@ -60,7 +60,7 @@ async def main(channel_name: str, db_name: str, db_path: str=None) -> None:
         client = chromadb.PersistentClient(path=db_path)
     else: # 
         client = chromadb.HttpClient(host="localhost", port=8000)
-    collection = client.get_collection(name=db_name)
+    collection = client.get_collection(name=db_name, embedding_function=em)
     
     # Populate the search results panel
     @ui.refreshable
