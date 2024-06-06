@@ -27,7 +27,7 @@ def add_to_db(vid_ids: list[str], collection, chunk: int, adv_by: int, chunk_fun
 # Top-level function for building a chromadb embeddings vector database from
 # a specified YouTube channel. The channel name should be the part after the 
 # @ symbol
-def build_db(em, channel_name: str, collection_name: str, path: str = '.',**kwargs):
+def build_db(em: callable, channel_name: str, collection_name: str, path: str = '.',**kwargs):
     full_path = os.path.normpath(os.path.abspath(path))
     print(f'SAVING TO: {full_path} <{collection_name}>') #show full path to stored db
     client = chromadb.PersistentClient(path=full_path)
