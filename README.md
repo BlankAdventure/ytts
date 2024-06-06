@@ -1,10 +1,5 @@
 # YouTube Transcript Search
-
-[Live Demo 1 - Mr Carlson's Lab](http://www.blankadventure.com/ytts1)
-
-[Live Demo 2 - The Signal Path](http://www.blankadventure.com/ytts2)
-
-(_Each database was built with a chunk size of 6 and an overlap of 2._)
+Live Demo: http://www.blankadventure.com/ytts
 
 YTTS is an exploration of enabling semantic search capabilities on a YouTube channel. The idea was initially sparked by Mr. Carlson Lab, whose videos are a deep-dive into antique electronics repair. His videos are information-dense and I would often find myself wishing I could remember some clever method or technqiue for circuit debugging, noise reduction, or performance testing. The ability to semantically search his content for various topcis seemed like exactly the thing I needed, and so this is my attempt. 
 
@@ -33,7 +28,20 @@ These samples are then subsequently added to our database of choice.
 
 (3) Storing to a database
 
-The current implemenation relies on chromadb (https://www.trychroma.com/), an open-source embeddings database. The code at present uses the default all-MiniLM-L6-v2 model, but chromadb wraps a variety of other LLMs as well (TBD: try some others!).
+The current implemenation relies on chromadb (https://www.trychroma.com/), an open-source embeddings database. The code at present uses the default all-MiniLM-L6-v2 model, but chromadb wraps a variety of other LLMs as well.
+
+(4) Online & Results
+
+The following collections have been built and tested. Qualitatively, the all-mpnet model seemed to produce the best search results.
+
+| Collection Name               | channels      | Chunk Method | Chunk Size | Adv By | Model               |
+|-------------------------------|---------------|--------------|------------|--------|---------------------|
+| roberta-base-squad2_word20_15 | combined      | words        | 20         | 15     | roberta-base-squad2 |
+| Thesignalpath                 | TheSignalPath | transcripts  | 6          | 4      | all-MiniLM-L6-v2    |
+| MrCarlsonslab                 | MrCarlsonsLab | transcripts  | 6          | 4      | all-MiniLM-L6-v2    |
+| all-mpnet-base-v2_word20_15   | combined      | words        | 20         | 15     |  all-mpnet-base-v2  |
+| combined                      | combined      | transcripts  | 6          | 4      | all-MiniLM-L6-v2    |
+| word_chunk_20_15              | combined      | words        | 20         | 15     | all-MiniLM-L6-v2    |
 
 
 
